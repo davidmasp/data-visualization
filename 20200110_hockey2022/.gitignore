@@ -1,0 +1,19 @@
+# R project files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+
+# Data files
+data/
+
+# Output files
+*.html
+*.pdf
+
+# Output folders
+results/
+figures/
+tables/
+notebooks/
+data.xlsx
