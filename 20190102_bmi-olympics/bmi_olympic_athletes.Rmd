@@ -1,0 +1,266 @@
+---
+title: "Olympic Athletes BMI"
+author: "David Mas"
+date: "1/2/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Olympics Data
+
+This data can be downloaded from the kagle site [here](https://www.kaggle.com/heesoo37/120-years-of-olympic-history-athletes-and-results/home) or using the API command
+
+```bash
+mkdir -p data
+cd data
+kaggle datasets download -d heesoo37/120-years-of-olympic-history-athletes-and-results
+unzip 120-years-of-olympic-history-athletes-and-results.zip 
+```
+
+Here is how I load the data.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+# imports =======
+library(magrittr)
+library(ggplot2)
+
+# read data =====
+dat = readr::read_csv("data/athlete_events.csv")
+meta_data = readr::read_csv(file = "data/noc_regions.csv")
+```
+
+
+## BMI
+
+Body Mass Index is a measure of the body used by doctors to determine if your weight falls into a healthy range according to your height. This is also a very well designed value with interesting properties. You can read more about it [here](https://en.wikipedia.org/wiki/Body_mass_index) or [here](https://www.cdc.gov/healthyweight/assessing/bmi/).
+
+Basically, what you need to know is that the healthy range is between 18.5 and 24.9 approx and that after 30 you are considered Obese. 
+
+The formula is very easy to compute and anyone can measure it. 
+
+$$BMI = \frac{m (kg)}{h(m)^2}$$
+
+Of course any body measurement is important for any sport, basketball players will be taller and judo players will be heavier. So my general question is how bmi does influence each sport in the olympics.
+
+```{r}
+# compute bmi rate ====
+bmi_dat = dat %>%
+  # height is in cm so I transform to meters before
+  dplyr::mutate(bmi = Weight / (Height / 100)**2) %>% 
+  # bmi lower than 10 has to be an error
+  dplyr::filter(!is.na(bmi) & !is.na(Age) & bmi > 10) 
+```
+
+
+## Overview
+
+In this first step I try to get an overview of how the data looks like.
+In this case I suggest a Season partition as sports are quite different depending on the olympic type.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE,fig.align = "center"}
+# define function limits
+bmi_high <- function(x) {sqrt(x / 24.9)}
+bmi_low <- function(x) {sqrt(x / 18.5)}
+bmi_obese <- function(x) {sqrt(x / 30)}
+
+
+top5 =  bmi_dat %>% dplyr::arrange(-bmi) %>% 
+  dplyr::distinct(Name,Sex,bmi,NOC,Sport,Height,Weight,Season) %>% 
+  dplyr::top_n(n = 3,wt = bmi) %>% 
+  dplyr::left_join(y = meta_data)
+
+bottom5 = bmi_dat %>% dplyr::arrange(-bmi) %>% 
+  dplyr::distinct(Name,Sex,bmi,NOC,Sport,Height,Weight,Season) %>% 
+  dplyr::top_n(n = 3,wt = -bmi) %>% 
+  dplyr::left_join(y = meta_data)
+
+extr = dplyr::bind_rows(list(top5,bottom5))
+extr %<>% dplyr::mutate(label = glue::glue("{Name} - {Sport} - {region} ")) 
+
+plot1 = bmi_dat %>% ggplot(aes(x = Weight,y = Height/100,color = Sex)) +
+  geom_jitter(alpha = 0.05)+
+  stat_function(fun = bmi_high,linetype = "dashed",color = "gray20") +
+  stat_function(fun = bmi_low,linetype = "dashed",color = "gray20") +
+  stat_function(fun = bmi_obese,linetype = "dashed", color = "darkred") +
+  facet_wrap(~Season) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  labs(x = "Weight (Kg)",
+       y = "Height (m)") +
+  ylim(c(NA,2.5)) +
+  ggrepel::geom_text_repel(data = extr,aes(label = label),
+                           nudge_x =120,
+                           nudge_y = -0.6,
+                           segment.alpha = 0.2,
+                           direction     = "y",size = 3)
+
+plot1
+```
+
+
+
+## BMI change over the years
+
+How did the BMI in athelets changed over the years?
+
+It can be seen that although the general trend still stays in the normal range we can see that in recent years there is an increase in the extremes. This means maximum and minimum BMI increases with time. This may be the result of including more and more athletes in the olymics in recent years or also that sport is more accessible recently.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE,fig.align = "center"}
+bmi_dat$decade = floor(bmi_dat$Year/10)
+plot4 = bmi_dat %>%
+  ggplot(aes(x = factor(decade),
+             y = bmi,color = Sex)) + 
+  geom_violin() + 
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  geom_hline(yintercept = 18.5,linetype = "dashed" ) +
+  geom_hline(yintercept =  24.9,linetype = "dashed" ) +
+  labs(caption = "Global distribution of BMI across the years")
+
+plot4
+```
+
+
+
+## Sport specific BMI
+
+Which sports have a higher or lower BMI? How is the variability in each sport?
+
+To answer this I computed the median bmi value and the atandard deviation, then I sorted the sports by the median value and I plotted the results. 
+
+As you can see and as expected, Sports like Rugby and Weightlifting have the higher BMIs and Gymnastics and Synchronized Swiming in the lower end.
+
+There is quite weird examples like [Tug-of-War](https://en.wikipedia.org/wiki/Tug_of_war_at_the_Summer_Olympics) or [Arts](https://en.wikipedia.org/wiki/Art_competitions_at_the_Summer_Olympics) in the top end. I didn't even know those were olympic sports once.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE,fig.align = "center"}
+bmi_dat1 = bmi_dat %>% dplyr::group_by(Sport,Sex,Season) %>%
+  dplyr::summarise(bmi_med = median(bmi),
+                   sd = sd(bmi)) 
+  
+bmi_dat1$Sport = forcats::fct_reorder(.f = bmi_dat1$Sport,
+                                      .x = bmi_dat1$bmi_med,
+                                      .fun = max)
+
+plot2 = ggplot(data = bmi_dat1,
+       aes(x = Sport,
+           color = Sex,
+           y = bmi_med,
+           ymax = bmi_med + sd,
+           ymin =  bmi_med - sd)) + 
+  geom_point() +
+  geom_errorbar() +
+  facet_grid(Sex~Season,scales = "free_x",space = "free_x") +
+  geom_hline(yintercept = 18.5,linetype = "dashed" ) +
+  geom_hline(yintercept =  24.9,linetype = "dashed" ) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text(angle = 90,hjust = 1)) +
+  labs(caption = "Median BMI per sport, bars show ± s.d.")
+  
+plot2
+```
+
+
+## BMI for the win
+
+Is having a higher or lower BMI worth it?
+
+Here is where the fun begins. To adress this qurestion I grouped people in the dataset based on if they won any medal at all, (note that this data is per year, so athletes are duplicated, this is not ideal for the test) and then for each sport I computed the wilcoxon two sided test on that. Then I corrected the obtained p values with the [Benjamini–Hochberg procedure](https://en.wikipedia.org/wiki/False_discovery_rate).
+
+Then to represent this data I used a [Volcano plot](https://en.wikipedia.org/wiki/Volcano_plot_(statistics)) used to show the effect size in the X-axis and the significance in the Y-axis. Basically, the more extreme the points are in X-axis the greater the effect is and the higher the point is in the Y-axis the assosiation is more significant.
+
+I used an FDR threshold of 1% to get clear plot.
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE,fig.align = "center"}
+bmi_dat$anymedal = ifelse(is.na(bmi_dat$Medal),"NO","YES")
+
+bmi_dat %>% base::split(list(bmi_dat$Sex,bmi_dat$Sport)) %>% 
+  purrr::map_df(function(x){
+    
+    if (length(unique(x$anymedal)) != 2){
+      return(data.frame())
+    }
+    
+    mean_diff = mean(x[x$anymedal == "NO",]$bmi) - mean(x[x$anymedal == "YES",]$bmi)
+    
+    dframe = wilcox.test(formula = bmi ~anymedal, data = x) %>% 
+      broom::tidy()
+    dframe$sport = unique(x$Sport)
+    dframe$mean_diff = mean_diff
+    dframe$sex = unique(x$Sex)
+    return(dframe)
+  }) -> volcano_data
+
+
+volcano_data$fdr = p.adjust(volcano_data$p.value,method = "fdr")
+
+trh = 0.01
+trh2 = 0.4
+plot3 = ggplot(data = volcano_data,aes(x = mean_diff,color = sex,y = -log10(fdr))) +
+  geom_point() +
+  geom_hline(yintercept = -log10(trh),linetype = "dashed") +
+  geom_vline(xintercept = trh2,linetype = "dashed") +
+  geom_vline(xintercept = -trh2,linetype = "dashed") +
+  ggrepel::geom_text_repel(
+    data  = subset(volcano_data, fdr < trh & mean_diff > trh2),
+    nudge_x = 1,
+    nudge_y = 1,
+    aes(label = sport)
+  ) +
+  ggrepel::geom_text_repel(
+    data  = subset(volcano_data, fdr < trh & mean_diff < -trh2),
+    nudge_x = -1.5,
+    direction     = "y",
+    aes(label = sport)
+  ) +
+  annotate(geom="text",
+           label = glue::glue("FDR = {trh}"),
+           x = Inf,
+           y = -log10(trh),
+           hjust = 1.5,
+           vjust = -1) +
+  annotate(geom="text",
+           label = paste("\u0394",
+                         glue::glue("BMI = {trh2}"),
+                         sep = ""),
+           vjust = 1.5,
+           hjust = -.2,
+           y = Inf,
+           x = trh2) +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text()) +
+  labs(caption = "Volcano plot showing differences of BMI from medal winners and participants. (wilcoxon two-sided test)",
+       x = "Mean BMI participants - Mean BMI medal-winners") 
+
+plot3
+```
+
+## Wrapping the figure
+
+Finally I group all the figures in one place.
+
+```{r fig.height=10, fig.width=15,message=FALSE, warning=FALSE, paged.print=FALSE,fig.align = "center"}
+c1 = cowplot::plot_grid(plot1 + theme(legend.position  = "top"),
+                        plot4 + theme(legend.position = "none"),
+                        ncol = 1,labels = c("A","B"))
+
+c2 = cowplot::plot_grid(plot2+ theme(legend.position = "none"),
+                        plot3+ theme(legend.position = "none"),
+                        ncol = 1,labels = c("C","D"))
+fp = cowplot::plot_grid(c1,
+                   c2,
+                   ncol = 2)
+
+cowplot::ggsave(filename = "bmi_plot.png",
+                dpi = 300,
+                plot = fp,width = 15,height = 10)
+
+
+fp
+```
+
+

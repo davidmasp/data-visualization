@@ -1,0 +1,12 @@
+magrittr
+ggplot2
+knitr
+readr
+dplyr
+ggrepel
+forcats
+base
+purrr
+broom
+glue
+cowplot
