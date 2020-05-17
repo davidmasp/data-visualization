@@ -105,3 +105,4 @@ fp = cowplot::plot_grid(p1,p2,rel_widths = c(1,1.5))
 # save plot
 
 ggsave(plot = fp,filename = "plot.svg",device = "svg",width = 10,height = 11)
+ggsave(plot = fp,filename = "plot.png",device = "png",width = 10,height = 11,dpi = 400)
