@@ -68,3 +68,6 @@ dat %>% ggplot(aes(x = Latirude,y = TreeLine)) +
   scale_color_manual(values = colors) +
   labs(y = "Elevation of tree line (m)",
        x = "Latitude")
+
+
+ggsave(plot = fp,filename = "plot.png",device = "png",width = 10,height = 5,dpi = 400)
