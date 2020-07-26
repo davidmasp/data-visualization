@@ -1,6 +1,6 @@
 # Goodreads Viz
 * author: David Mas-Ponte
-* date: 2020-01-18
+* date: 2020-07-26
 ## Usage
 In order to compile this report, run:
 
@@ -17,12 +17,15 @@ You will need to install the following dependencies first:
 * dplyr
 * fs
 * ggplot2
+* ggrepel
 * glue
 * knitr
 * lubridate
 * magrittr
+* patchwork
 * readr
 * renv
+* stringr
 
 ## Data source
 [Goodreads](https://www.goodreads.com/) is a
@@ -100,12 +103,10 @@ raiting_cor = with(dat_read,cor(`My Rating`,
                                 method = "spearman")) %>% round(digits = 2)
 
 p1 = dat_read %>%
-  ggplot(aes(y = `My Rating`,x = `Average Rating`, color = year_read)) +
-  geom_jitter(height = 0.2,width = 0) +
-  geom_smooth(method = "lm",color = "black",linetype = "dashed") +
-  theme_classic() +
-  scale_color_viridis_c(breaks = c(min(dat_read$year_read,na.rm = T),
-                                  max(dat_read$year_read,na.rm = T))) +
+  ggplot(aes(x = factor(`My Rating`),y = `Average Rating`)) +
+  geom_jitter(width = 0.4,height = 0) +
+  geom_boxplot() +
+  theme_classic()  +
   annotate(x  =Inf,y = -Inf,geom = "text",
            label = glue::glue("Spearman rho: {raiting_cor}"),
            hjust = 1,
@@ -125,15 +126,45 @@ p3 = dat_read %>% ggplot(aes(x = factor(year_read),
   scale_y_continuous(expand = c(0,0)) +
   labs(y = "Number of Pages", x = "Year") +
   theme_classic()
+
+
+
+dat_read$saga = stringr::str_extract(dat_read$Title,"(?<=\\().+(?=, #)")
+dat_read$saga = ifelse(is.na(dat_read$saga),dat_read$Title,no = dat_read$Title)
+dat_read %>%
+  dplyr::filter(!is.na(`Original Publication Year`)) %>%
+  dplyr::filter(!is.na(`Date Read`)) -> plot_data
+
+p4 = ggplot(plot_data,
+            aes(x = `Date Read`,
+                y = `Original Publication Year`)) +
+  geom_point() +
+  ggrepel::geom_text_repel(data = dplyr::top_n(x = plot_data,
+                                               n = -10,
+                                               wt = `Original Publication Year`),
+                           aes(label = saga),force = 50) +
+  scale_y_log10() +
+  theme_classic()
 ```
+
+```r
+library(patchwork)
+(p3 + p2 + p1) / p4
+```
+
+```
+## Warning: Removed 2 rows containing missing values (position_stack).
+```
+
+<img src="figure/unnamed-chunk-4-1.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" style="display: block; margin: auto;" />
 
 ```r
 plot_grid(plot_grid(p3,p2,ncol = 1),p1,ncol = 2)
 ```
 
 ```
-## Warning: Removed 1 rows containing missing values (position_stack).
+## Warning: Removed 2 rows containing missing values (position_stack).
 ```
 
-<img src="figure/unnamed-chunk-4-1.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" style="display: block; margin: auto;" />
+<img src="figure/unnamed-chunk-4-2.png" title="plot of chunk unnamed-chunk-4" alt="plot of chunk unnamed-chunk-4" style="display: block; margin: auto;" />
 
