@@ -1,0 +1,6 @@
+
+*.rds
+*.pdf
+.Rproj.user
+*.svg
+data
