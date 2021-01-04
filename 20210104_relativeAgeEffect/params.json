@@ -1,0 +1,33 @@
+{
+  "instances": 
+    {
+      "euFootball" : {
+      "nullFN" : "null_es.rds",
+      "wikiFN" : {
+        "F.C. Barcelona" : {
+          "fn" : "data/wikiExports/fcb-Wikipedia-20201227194654.xml",
+          "color" : "#004D98"},
+        "F.C. Internazionale Milano" :{
+          "fn": "data/wikiExports/inter-Wikipedia-20201228021329.xml",
+          "color": "#A29161"
+        },
+        "Juventus F.C." : {
+          "fn": "data/wikiExports/juventus-Wikipedia-20201227195321.xml",
+          "color" : "#000000"
+        },
+          "Bayern Munich F.C.": {
+          "fn": "data/wikiExports/bayern-Wikipedia-20201231164740.xml",
+          "color" : "#DC052D"
+        },
+         "Borussia Dortmund": {
+          "fn": "data/wikiExports/dortmund-Wikipedia-20201231164718.xml",
+          "color" : "#FDE100"
+        },
+        "Club Atletico de Madrid": {
+          "fn": "data/wikiExports/AM_Wikipedia-20210103232409.xml",
+          "color" : "#CB3524"
+        }
+      }
+    }
+  }
+}
