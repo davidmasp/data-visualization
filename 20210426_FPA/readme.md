@@ -5,7 +5,7 @@ Distribution of the day of detection of ~1M fires in the US throughout the year.
 
 Quick links:
 * [Data from kaggle](https://www.kaggle.com/rtatman/188-million-us-wildfires)
-* [Code in github]()
+* [Code in github](https://github.com/davidmasp/data-visualization/tree/master/20210426_FPA)
 * [Get the NFT of this vizz at hic et nunc]()
 
 High values represent seasons where many fires of a particular type
