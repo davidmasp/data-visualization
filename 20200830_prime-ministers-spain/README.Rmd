@@ -1,0 +1,17 @@
+
+
+
+
+
+## Usage
+
+How to download the data?
+
+```bash
+# install kaggle with
+# pip install kaggle --upgrade
+kaggle datasets download -d davidmasp/prime-ministers-of-spain
+unzip -d data prime-ministers-of-spain.zip
+```
+
+
