@@ -1,5 +1,7 @@
 # Distribution of the causes of fires throughout the year :fire:
 
+## Summary 
+
 Distribution of the day of detection of ~1M fires in the US throughout the year. Stratified for some selected causes. High values represent seasons where many fires of a particular type were detected. The firework fires for instance show a sharp accumulation in the vicinity of the 4th of July.
 
 The shaded (in color) area represents the mode of that specific distribution
@@ -11,7 +13,7 @@ current implementation. I also thought it would be hard to read.
 ## Quick links:
 * [Data from kaggle](https://www.kaggle.com/rtatman/188-million-us-wildfires)
 * [Code in github](https://github.com/davidmasp/data-visualization/tree/master/20210426_FPA)
-* [Get the NFT of this vizz at hic et nunc](https://www.hicetnunc.xyz/objkt/152393)
+* [Get the NFT version of this vizz at objkt.bid](https://www.objkt.bid/o/152393)
 
 ## Data
 
