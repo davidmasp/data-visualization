@@ -1,0 +1,6 @@
+*.pdf
+*.csv
+*.xls
+data
+flags
+.Rproj.user
