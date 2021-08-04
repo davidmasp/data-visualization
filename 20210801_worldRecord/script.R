@@ -66,3 +66,41 @@ dat %>%
   labs(y = "Distance", x = "Year")
 
 ggsave("plot.pdf", width = 8, height = 4)
+
+
+# script3 -----------------------------------------------------------------
+
+pre_IAAF = "1976-01-01" %>% as.Date()
+
+col_types = cols(
+  Time = col_double(),
+  Name = col_character(),
+  Date = col_date(format = ""),
+  ddd = col_character()
+)
+dat = readr::read_csv("data/men_400_hurdles.csv", col_types = col_types)
+
+set.seed(42)
+min_date = "1950-01-01" %>% as.Date()
+dat %>%
+  dplyr::filter(Date > min_date ) %>%
+  ggplot( aes(x = Date, y = Time)) +
+  annotate(geom = "rect",
+           xmin = min_date,
+           fill = "gray90",
+           xmax = pre_IAAF,
+           ymin = -Inf,
+           ymax = Inf) +
+  geom_point() +
+  geom_line() +
+  geom_vline(xintercept = pre_IAAF, linetype = "dashed") +
+  ggrepel::geom_text_repel(aes(label = Name)) +
+  theme_classic() +
+  theme(text = element_text(size = 12),
+        axis.ticks = element_blank()) +
+  scale_x_date(expand = expansion(mult = c(0,0.05), add = c(5,5))) +
+  scale_y_continuous(labels = scales::unit_format(accuracy = 1,suffix = "s")) +
+  labs(y = "Time", x = "Year")
+
+ggsave("plot2.pdf", width = 8, height = 4)
+

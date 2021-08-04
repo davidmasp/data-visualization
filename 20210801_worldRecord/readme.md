@@ -16,3 +16,13 @@ competitiveness.
 
 * Source: https://en.wikipedia.org/wiki/Triple_jump_world_record_progression#Women
 * Tools Used: R and ggplot for the initial wrangling and plotting the data points, then Inkscape to add svg flags from openmoji
+
+[OC] Karsten Warholm breaking records in 400 meters hurdles
+
+The chart shows the Men's 400 metres hurdles world record progression from 1950 to now. Karsten Warholm broke a 29 years old record last month and he has done it again today in the Olympics with a difference of 0.8 seconds from his
+previous mark. This didn't happen since 1968.
+
+* Source: https://en.wikipedia.org/wiki/Men%27s_400_metres_hurdles_world_record_progression
+* Tools Used: R and ggplot for the initial wrangling and plotting the data points, then Inkscape to add svg flags from openmoji
+
+
