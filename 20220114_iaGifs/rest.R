@@ -8,6 +8,10 @@
 
 library(ggplot2)
 library(magrittr)
+library(zoo)
+source("utils.R")
+library(progress)
+library(gifski)
 
 # params ------------------------------------------------------------------
 
@@ -16,7 +20,15 @@ ca_ex = c("CE","ML")
 
 # data --------------------------------------------------------------------
 
-dat = readr::read_csv(file = "Downloads/casos_tecnica_ccaa.csv")
+url = "https://cnecovid.isciii.es/covid19/resources/casos_tecnica_ccaa.csv"
+fn = "casos_tecnica_ccaa.csv"
+if (fs::file_exists(fn)){
+  fs::file_delete(fn)
+} 
+
+curl::curl_download(url, destfile = fn)
+
+dat = readr::read_csv(file = fn)
 
 # script ------------------------------------------------------------------
 
@@ -58,11 +70,12 @@ dat_filt$fecha %>% unique() -> ufecha
 
 ufecha = ufecha[20:length(ufecha)]
 
-library(progress)
 pb <- progress_bar$new(total = length(ufecha),
                        format = ":percent [:bar] eta: :eta | elapsed: :elapsed",
                        clear = FALSE,
                        width= cli::console_width())
+
+cache_path = fs::dir_create("cache_png")
 
 ufecha %>% purrr::map(function(x){
   # this goes inside the iteration
@@ -77,7 +90,14 @@ ufecha %>% purrr::map(function(x){
     scale_y_log10(expand = expansion()) +
     scale_x_continuous(expand = expansion()) +
     theme(legend.position = "none") ->main_plot
-  fout = glue::glue("{x}_ia.png")
+  fout = glue::glue("{x}_ia.png") %>% fs::path(cache_path,.)
   ggsave(fout, width = 9, height = 7)
-})
+  fout
+}) -> png_files
+
+gif_file <- gifski(unlist(png_files),
+                   gif_file = "figure.gif",
+                   delay = 1/5)
+fs::dir_delete(cache_path)
+utils::browseURL(gif_file)
 
