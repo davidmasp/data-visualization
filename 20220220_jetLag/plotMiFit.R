@@ -12,15 +12,11 @@ library(vroom)
 
 # params ------------------------------------------------------------------
 
-fn = "data/SLEEP/SLEEP_1644643023012.csv"
+fn = "data/SLEEP/SLEEP_1647738766053.csv"
 
 # data --------------------------------------------------------------------
 
 dat = vroom(fn)
-
-dat = dat %>% dplyr::filter(
-  date > lubridate::date("2021-11-01")
-)
 
 # script ------------------------------------------------------------------
 
@@ -49,26 +45,40 @@ ifelse(dat$tsd > dat$ted, dat$tsd - 24, dat$tsd) -> dat$tsd
 
 dat = dat[dat$deepSleepTime != 0,]
 
-
 avg_std = mean(dat[dat$date <= ch_date, ]$tsd)
 avg_sed = mean(dat[dat$date <= ch_date, ]$ted)
 
 colors = c("#ff7f00", "#1f78b4")
 shade = c("#9e9ac8","#74c476")
 
-ggplot(dat, aes(fill = date > ch_date,xmin = date-0.25, xmax = date+0.25,  ymin = tsd, ymax = ted)) +
+hours24 <- function(x){
+  ifelse(x < 0, 24 + x, x)
+}
+
+ggplot(dat, aes(fill = date > ch_date,xmin = date-0.25, 
+                xmax = date+0.25,  ymin = tsd, ymax = ted)) +
   geom_vline(xintercept = ch_date, size = 1, linetype = "dashed") +
   geom_rect() +
-  scale_y_continuous(breaks = seq(-2,10,1)) +
-  geom_smooth(aes(x = date, y = tsd, group = date > ch_date), size = 2,span = 0.4, se = FALSE,  color = colors[1]) +
-  geom_smooth(aes(x = date, y = ted, group = date > ch_date), size = 2, span = 0.4,se = FALSE, color = colors[2]) +
-  geom_hline(yintercept = avg_std, color = colors[1], size = 1, linetype = "dashed") +
-  geom_hline(yintercept = avg_sed, color = colors[2], size = 1, linetype = "dashed")+
+  scale_y_continuous(breaks = seq(-6,10,1), labels = hours24) +
+  geom_smooth(aes(x = date, y = tsd, group = date > ch_date),
+              size = 2,span = 0.8, se = FALSE,  color = "black") +
+  geom_smooth(aes(x = date, y = ted, group = date > ch_date),
+              size = 2, span = 0.8,se = FALSE, color = "black") +
+  geom_hline(yintercept = avg_std,
+             color = "black", 
+             size = 1,
+             linetype = "dashed") +
+  geom_hline(yintercept = avg_sed, 
+             color = "black",
+             size = 1,
+             linetype = "dashed")+
   scale_x_date(expand = expansion()) +
   labs(y = "Sleeping time", x = "Date") +
   scale_fill_manual(values = shade) +
   theme_classic() +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  theme(axis.line = element_blank(),
+        axis.ticks = element_blank())
 
 ggsave("plot.pdf", width = 6, height = 4)
 
